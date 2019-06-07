@@ -1,3 +1,7 @@
+require 'http'
+require 'mailinabox_api/resources/users'
+require 'mailinabox_api/resources/aliases'
+
 module MailinaboxApi
   class Client
     def initialize(email:, password:, domain:, insecure: false)
@@ -7,78 +11,10 @@ module MailinaboxApi
       @insecure = insecure
     end
 
-    def users
-      get '/admin/mail/users?format=json'
-    end
+    include MailinaboxApi::Users
+    include MailinaboxApi::Aliases
 
-    def user_exists?(email)
-      domain = email.split('@').last
-      users.find { |i| i['domain'] == domain }['users'].find { |i| i['email'] == email } != nil
-    end
-
-    def aliases
-      get '/admin/mail/aliases?format=json'
-    end
-
-    def update_password(email, password)
-      request do |http|
-        http.
-          headers('Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8').
-          post('/admin/mail/users/password',
-               form: {
-                 email: email,
-                 password: password
-               })
-      end
-    end
-
-    def add_to_alias(email, alias_list)
-      domain = alias_list.split('@').last
-      al = aliases.find { |i| i['domain'] == domain }['aliases'].find { |i| i['address'] == alias_list }
-      return false if al['forwards_to'].include?(email)
-
-      request do |http|
-        http.
-          headers('Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8').
-          post('/admin/mail/aliases/add',
-               form: {
-                 address: alias_list,
-                 forwards_to: (al['forwards_to'] + [email]).join("\n"),
-                 permitted_senders: '',
-                 update_if_exists: '1'
-               })
-      end
-    end
-
-    # Creates new alias
-    # from: E-Mail
-    # to: List of
-    def create_alias(address, list_of_recipients, permitted_senders: '')
-      domain = address.split('@').last
-      al = aliases.find { |i| i['domain'] == domain }['aliases'].find { |i| i['address'] == address }
-      return false if al
-
-      request do |http|
-        http.
-          headers('Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8').
-          post('/admin/mail/aliases/add',
-               form: {
-                 address: address,
-                 forwards_to: list_of_recipients,
-                 permitted_senders: permitted_senders,
-               })
-      end
-    end
-
-    def create_email(email, password, privileges: nil)
-      request do |http|
-        http.
-          headers('Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8').
-          post('/admin/mail/users/add', form: { email: email, password: password, privileges: privileges })
-      end
-    end
-
-    private
+    protected
 
     def get(url)
       request do |request|
@@ -103,7 +39,7 @@ module MailinaboxApi
       unless @response.status.success?
         Kernel.warn @response.body.to_s
 
-        raise StandardError, "#{@response.status} Request failed to #{full_url}"
+        raise MailinaboxApi::Error.new("#{@response.status} Request failed", response: @response)
       end
       if @response.headers['Content-Type'] == 'application/json'
         JSON.parse(@response.body.to_s)

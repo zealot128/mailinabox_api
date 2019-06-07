@@ -1,6 +1,13 @@
 require "mailinabox_api/version"
-require 'mailinabox_api/client'
 
 module MailinaboxApi
-  class Error < StandardError; end
+  class Error < StandardError
+    attr_reader :response
+    def initialize(message, response = nil)
+      @response = response
+      super(message)
+    end
+  end
 end
+
+require 'mailinabox_api/client'

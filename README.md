@@ -1,8 +1,5 @@
 # MailinaboxApi
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/mailinabox_api`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
 
 ## Installation
 
@@ -22,18 +19,43 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+```ruby
+api = MailinaboxApi::Client.new(
+  email: Rails.application.secrets.mailinabox_admin_username,
+  password: Rails.application.secrets.mailinabox_admin_password,
+  domain: 'mail.example.com'
+)
 
-## Development
+api.user_exists?(email)
 
-After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+# all users
+api.users
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+# all aliases
+api.aliases
 
-## Contributing
+# adds one email to an (maybe) existing alias
+api.add_to_alias(email, alias_list)
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/zealot128/mailinabox_api.
+# Creates new alias with full list of recipients
+api.create_alias('support@example.com', ['abc@cde', 'bdd@aaa.com'])
 
-## License
+api.update_password(email, password)
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+api.create_email(email, password, privileges: nil)
+
+## NOT IMPLEMENTED
+# POST /mail/aliases/remove
+api.remove_alias
+# POST /mail/users/remove
+api.remove_user
+# GET /mail/users/privileges
+api.user_privileges
+# POST /mail/users/privileges/add
+api.add_user_privilege
+# POST /mail/users/privileges/add
+api.remove_user_privilege
+
+# DNS Stuff, SSL Stuff, ...
+```
+
