@@ -18,8 +18,13 @@ module MailinaboxApi
     end
 
     # POST /mail/users/remove
-    def remove_user
-      raise NotImplementedError
+    # archive account
+    def remove_user(email)
+      request do |http|
+        http.
+          headers('Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8').
+          post('/admin/mail/users/remove', form: { email: email })
+      end
     end
 
     # GET /mail/users/privileges
