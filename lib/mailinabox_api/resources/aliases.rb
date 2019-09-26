@@ -44,7 +44,26 @@ module MailinaboxApi
                })
       end
     end
+    
+    # remove specific mail from an alias
+    # STRING email: E-mail to remove from,
+    # STRING mail_alias: mail alias email
+    def remove_from_alias(email, mail_alias:, aliases: self.aliases)
+      domain = mail_alias.split('@').last
+      al = aliases.find { |i| i['domain'] == domain }['aliases'].find { |i| i['address'] == mail_alias }
+      return false unless al['forwards_to'].include?(email)
 
+      request do |http|
+        http.
+          headers('Content-Type' => 'application/x-www-form-urlencoded; charset=UTF-8').
+          post('/admin/mail/aliases/add', form: {
+            address: verteiler,
+            forwards_to: (al['forwards_to'] - [email]).join("\n"),
+            permitted_senders: '',
+            update_if_exists: '1'
+          })
+      end
+    end
     # POST /mail/aliases/remove
     def remove_alias
       raise NotImplementedError
